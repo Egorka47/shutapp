@@ -5,14 +5,97 @@
   <title>ShutApp</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <link rel="stylesheet" href="style.css">
+  <style>
+    body { margin:0; font-family:system-ui; background:#0f0f14; color:#fff; }
+    #app { padding:12px; }
+    .post { background:#1a1a22; border-radius:14px; padding:12px; margin-bottom:12px; }
+    .text { white-space:pre-wrap; line-height:1.4; font-size:15px; }
+    .reactions { display:flex; gap:14px; margin-top:10px; }
+    .reaction { background:transparent; border:0; color:#fff; font-size:20px; cursor:pointer; opacity:.9; }
+    .reaction span { font-size:12px; opacity:.7; margin-left:4px; }
+    .more { width:100%; background:#2a2a38; color:#fff; border:0; border-radius:10px; padding:10px; }
+    .hint { opacity:.7; padding:12px; }
+  </style>
 </head>
 <body>
   <div id="app">
     <div id="feed"></div>
-    <button id="refresh">Обновить</button>
+    <button id="more" class="more">Ещё</button>
   </div>
 
-  <script type="module" src="app.js"></script>
+<script>
+  const tg = window.Telegram?.WebApp;
+  tg?.ready?.();
+  tg?.expand?.();
+
+  const API_BASE = "https://YOUR_BACKEND_DOMAIN"; // <-- сюда домен сервера (https)
+
+  const feedEl = document.getElementById("feed");
+  const moreBtn = document.getElementById("more");
+  let cursor = null;
+
+  moreBtn.onclick = () => loadMore();
+  loadMore();
+
+  async function loadMore() {
+    try {
+      const url = cursor ? `${API_BASE}/feed?cursor=${cursor}` : `${API_BASE}/feed`;
+      const r = await fetch(url);
+      if (!r.ok) throw new Error(await r.text());
+      const posts = await r.json();
+
+      if (!posts.length && !cursor) {
+        feedEl.innerHTML = `<div class="hint">Пока пусто. Напиши пост боту через <b>/newpost</b>.</div>`;
+        moreBtn.style.display = "none";
+        return;
+      }
+      if (!posts.length) {
+        moreBtn.style.display = "none";
+        return;
+      }
+
+      posts.forEach(renderPost);
+      cursor = posts[posts.length - 1].id;
+    } catch (e) {
+      feedEl.innerHTML = `<div class="hint">Не могу загрузить ленту. Проверь API_BASE и что сервер доступен по HTTPS.</div>`;
+      moreBtn.style.display = "none";
+    }
+  }
+
+  function renderPost(p) {
+    const r = p.reactions || {};
+    const el = document.createElement("div");
+    el.className = "post";
+    el.innerHTML = `
+      <div class="text">${escapeHtml(p.text)}</div>
+      <div class="reactions">
+        <button class="reaction" data-t="support">🤍 <span>${r.support ?? 0}</span></button>
+        <button class="reaction" data-t="hug">🫂 <span>${r.hug ?? 0}</span></button>
+        <button class="reaction" data-t="sad">😔 <span>${r.sad ?? 0}</span></button>
+      </div>
+    `;
+
+    el.querySelectorAll(".reaction").forEach(btn => {
+      btn.onclick = async () => {
+        const type = btn.dataset.t;
+        await fetch(`${API_BASE}/posts/${p.id}/react`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ type })
+        });
+        const span = btn.querySelector("span");
+        span.textContent = String((Number(span.textContent) || 0) + 1);
+      };
+    });
+
+    feedEl.appendChild(el);
+  }
+
+  function escapeHtml(text) {
+    return String(text).replace(/[&<>"']/g, m =>
+      ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[m])
+    );
+  }
+</script>
 </body>
 </html>
