@@ -1,45 +1,47 @@
+* {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
   font-family: system-ui, -apple-system, BlinkMacSystemFont;
   background: #0f0f14;
-  color: #fff;
+  color: #ffffff;
 }
 
 #app {
   padding: 12px;
 }
 
-h2 {
-  text-align: center;
+.post {
+  background: #1a1a22;
+  border-radius: 14px;
+  padding: 12px;
   margin-bottom: 12px;
 }
 
-.post {
-  background: #1a1a22;
-  border-radius: 12px;
-  padding: 10px;
-  margin-bottom: 10px;
-}
-
-.author {
-  font-size: 12px;
-  opacity: 0.6;
-}
-
 .text {
-  margin: 6px 0;
   white-space: pre-wrap;
+  line-height: 1.4;
+  font-size: 15px;
 }
 
-.actions {
+.reactions {
   display: flex;
-  gap: 10px;
+  gap: 14px;
+  margin-top: 10px;
 }
 
-button {
-  background: #2a2a38;
-  color: #fff;
+.reaction {
+  background: transparent;
   border: none;
-  border-radius: 8px;
-  padding: 6px 10px;
+  font-size: 20px;
+  cursor: pointer;
+  opacity: 0.6;
+  padding: 0;
+}
+
+.reaction.active {
+  opacity: 1;
+  transform: scale(1.15);
 }

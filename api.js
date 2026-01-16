@@ -1,25 +1,11 @@
-const API_URL = "https://YOUR_BACKEND_URL"; // потом подставишь
-const tg = window.Telegram.WebApp;
+// API будет позже.
+// Сейчас мини-апп полностью автономный.
 
-export async function apiGet(path) {
-  const res = await fetch(API_URL + path, {
-    headers: {
-      "X-Tg-Init-Data": tg.initData
-    }
-  });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
-}
-
-export async function apiPost(path, body) {
-  const res = await fetch(API_URL + path, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Tg-Init-Data": tg.initData
-    },
-    body: JSON.stringify(body || {})
-  });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
+export async function getFeed() {
+  // временные тестовые посты
+  return [
+    { id: 1, text: "Иногда просто хочется исчезнуть и чтобы никто не трогал." },
+    { id: 2, text: "Сегодня было тяжело, но я всё ещё здесь." },
+    { id: 3, text: "Если ты это читаешь — ты не один." }
+  ];
 }

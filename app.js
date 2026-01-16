@@ -1,46 +1,37 @@
-import { apiGet, apiPost } from "./api.js";
+import { getFeed } from "./api.js";
 
 const feedEl = document.getElementById("feed");
-const loadMoreBtn = document.getElementById("loadMore");
 
-let cursor = null;
+const tg = window.Telegram.WebApp;
+tg.ready();
+tg.expand();
 
-Telegram.WebApp.ready();
-Telegram.WebApp.expand();
+// сразу загружаем ленту
+loadFeed();
 
 async function loadFeed() {
-  let url = "/feed";
-  if (cursor) url += "?cursor=" + cursor;
-
-  const posts = await apiGet(url);
-  if (!posts.length) {
-    loadMoreBtn.style.display = "none";
-    return;
-  }
-
+  const posts = await getFeed();
   posts.forEach(renderPost);
-  cursor = posts[posts.length - 1].id;
 }
 
-function renderPost(p) {
+function renderPost(post) {
   const el = document.createElement("div");
   el.className = "post";
 
   el.innerHTML = `
-    <div class="author">@${p.user.username || "anon"}</div>
-    <div class="text">${escapeHtml(p.text)}</div>
-    <div class="actions">
-      <button data-like>❤️ ${p.likes}</button>
-      <button data-comments>💬 ${p.comments_count}</button>
+    <div class="text">${escapeHtml(post.text)}</div>
+    <div class="reactions">
+      <button class="reaction" data-r="support">🤍</button>
+      <button class="reaction" data-r="hug">🫂</button>
+      <button class="reaction" data-r="sad">😔</button>
     </div>
   `;
 
-  el.querySelector("[data-like]").onclick = async () => {
-    await apiPost(`/posts/${p.id}/reactions/toggle`, { type: "like" });
-    el.querySelector("[data-like]").innerText =
-      (p.my_like ? "🤍" : "❤️") + " " + (++p.likes);
-    p.my_like = !p.my_like;
-  };
+  el.querySelectorAll(".reaction").forEach(btn => {
+    btn.onclick = () => {
+      btn.classList.toggle("active");
+    };
+  });
 
   feedEl.appendChild(el);
 }
@@ -50,7 +41,3 @@ function escapeHtml(text) {
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m])
   );
 }
-
-loadMoreBtn.onclick = () => loadFeed();
-
-loadFeed();
